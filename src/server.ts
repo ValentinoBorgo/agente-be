@@ -34,7 +34,26 @@ export function createServer() {
   app.use(`${API_PREFIX}/chat`, chatRouter);
   app.use(`${API_PREFIX}/local`, localRouter);
 
-  app.get("/health", (_, res) => res.json({ status: "ok" }));
+  app.get("/health", async (_, res) => {
+    try {
+      const uptime = process.uptime();
+      const timestamp = new Date().toISOString();
+
+      res.json({
+        status: "ok",
+        message: "Servidor funcionando correctamente",
+        timestamp,
+        uptime_seconds: uptime,
+        uptime_human: `${Math.floor(uptime / 60)} min`,
+      });
+    } catch (err) {
+      res.status(500).json({
+        status: "error",
+        message: "Health check falló",
+        error: err.message,
+      });
+    }
+  });
 
   app.use((err, req, res, next) => {
     logger.error(
