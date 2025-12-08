@@ -1,11 +1,12 @@
 import { ChromaClient } from "chromadb";
+import path from "path";
 
-export const client = new ChromaClient({
-  host: process.env.CHROMA_HOST || "localhost",
-  port: Number(process.env.CHROMA_PORT) || 8000,
-  ssl: false,
+const CHROMA_DIR = process.env.CHROMA_DIR || path.join(process.cwd(), "data/chroma");
+
+export const chroma = new ChromaClient({
+  path: CHROMA_DIR,
 });
 
-export const collection = await client.getOrCreateCollection({
+export const collection = await chroma.getOrCreateCollection({
   name: "rag_docs",
 });
