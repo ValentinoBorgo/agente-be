@@ -8,11 +8,21 @@ export async function createUserTask() {
   const seedPassword = process.env.SEED_USER_PASSWORD;
 
   if (!seedName || !seedPassword) {
-    console.log(
-      "⚠️ Usuario inicial no configurado (faltan variables de entorno)"
-    );
+    console.log("⚠️ Usuario inicial no configurado (faltan variables de entorno)");
     return;
   }
+
+  await db.query(`
+    CREATE EXTENSION IF NOT EXISTS vector;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS rag_docs (
+      id SERIAL PRIMARY KEY,
+      text TEXT NOT NULL,
+      embedding vector(1536) NOT NULL
+    );
+  `);
 
   await db.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -28,7 +38,9 @@ export async function createUserTask() {
       user_id INT NOT NULL,
       message TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT NOW(),
-      CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+      CONSTRAINT fk_user FOREIGN KEY(user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
     );
   `);
 
@@ -43,10 +55,10 @@ export async function createUserTask() {
 
   const hash = await bcrypt.hash(seedPassword, 10);
 
-  await db.query("INSERT INTO users (name, password) VALUES ($1, $2)", [
-    seedName,
-    hash,
-  ]);
+  await db.query(
+    "INSERT INTO users (name, password) VALUES ($1, $2)",
+    [seedName, hash]
+  );
 
   console.log(`✔ Usuario '${seedName}' creado automáticamente`);
 }

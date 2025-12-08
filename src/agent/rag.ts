@@ -1,10 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config();
 import OpenAI from "openai";
-import { collection } from "../database/vector-db";
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
+import { getDb } from "../database/postgres.js";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -77,13 +76,11 @@ export function localSearch(query) {
     });
 
     const lines = content.split(/\r?\n/);
-
     const matchingLines = lines.filter((line) => {
       const cleanLine = line
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
-
       return words.some((word) => cleanLine.includes(word));
     });
 
@@ -107,29 +104,32 @@ export function localSearch(query) {
   return { results, trace };
 }
 
-export async function addDocument(text) {
-  const chunks = chunkText(text);
+async function embedText(text: string): Promise<number[]> {
+  const response = await client.embeddings.create({
+    model: "text-embedding-3-small",
+    input: text,
+  });
 
-  for (const chunk of chunks) {
-    const embeddingResponse = await client.embeddings.create({
-      model: "text-embedding-3-small",
-      input: chunk,
-    });
+  return response.data[0].embedding;
+}
 
-    const embedding = embeddingResponse.data[0].embedding;
+export async function addDocument(text: string) {
+  const embedding = await embedText(text);
 
-    await (await collection).add({
-      ids: [crypto.randomUUID()],
-      embeddings: [embedding],
-      metadatas: [{ text: chunk }],
-    });
-  }
-
-  console.log(`📄 Documento indexado en ${chunks.length}`);
+  const embeddingVector = `[${embedding.join(",")}]`;
+  const db = getDb();
+  await db.query(
+    `INSERT INTO rag_docs (text, embedding)
+     VALUES ($1, $2)`,
+    [text, embeddingVector]
+  );
 }
 
 export async function searchDocs(query) {
+  const db = getDb();
+
   try {
+    // Crear embedding para la query
     const embeddingResponse = await client.embeddings.create({
       model: "text-embedding-3-small",
       input: query,
@@ -137,15 +137,22 @@ export async function searchDocs(query) {
 
     const embedding = embeddingResponse.data[0].embedding;
 
-    const res = await (await collection).query({
-      nResults: 3,
-      queryEmbeddings: [embedding],
-    });
+    const result = await db.query(
+      `
+      SELECT text
+      FROM rag_docs
+      ORDER BY embedding <-> $1
+      LIMIT 3
+      `,
+      [embedding]
+    );
 
-    return res.metadatas?.[0]?.map((m) => m.text) ?? [];
+    if (result.rows.length === 0) return ["⚠️ Sin resultados vectoriales"];
+
+    return result.rows.map((r) => r.text);
   } catch (err) {
-    console.log("Error en RAG :", err);
+    console.log("❌ Error en búsqueda vectorial PGVector:", err);
     const fallback = localSearch(query);
-    return fallback ? fallback : ["No se encontró información"];
+    return fallback ? fallback : ["❌ No se encontró información"];
   }
 }
