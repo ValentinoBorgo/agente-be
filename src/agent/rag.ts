@@ -36,7 +36,27 @@ export function localSearch(query) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9\s]/g, "");
 
-  const words = clean.split(/\s+/).filter((w) => w.length > 3);
+  const stopwords = [
+    "estaciones",
+    "estacion",
+    "servicio",
+    "gasolineras",
+    "conoces",
+    "quiero",
+    "cuales",
+    "que",
+    "como",
+    "donde",
+    "de",
+    "las",
+    "los",
+    "para",
+    "sobre",
+  ];
+
+  const words = clean
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !stopwords.includes(w));
 
   trace.push({
     step: "parse_query",

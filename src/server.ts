@@ -6,7 +6,6 @@ import cors from "cors";
 import logger from "./logger.js";
 
 import { chatRouter } from "./routes/chat.route.js";
-import { localRouter } from "./routes/local.route.js";
 import helmet from "helmet";
 
 export function createServer() {
@@ -32,7 +31,6 @@ export function createServer() {
   const API_PREFIX = process.env.API_PREFIX || "/api";
 
   app.use(`${API_PREFIX}/chat`, chatRouter);
-  app.use(`${API_PREFIX}/local`, localRouter);
 
   app.get("/health", async (_, res) => {
     try {

@@ -22,6 +22,16 @@ export async function createUserTask() {
     );
   `);
 
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS logs (
+      id SERIAL PRIMARY KEY,
+      user_id INT NOT NULL,
+      message TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `);
+
   const existing = await db.query("SELECT id FROM users WHERE name = $1", [
     seedName,
   ]);

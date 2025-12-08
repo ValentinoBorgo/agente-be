@@ -5,6 +5,7 @@ import logger from "./logger.js";
 import { createServer } from "./server.js";
 import { initDb } from "./database/postgres.js";
 import { createUserTask } from "./database/createUserTask.js";
+import { indexDocs } from "./agent/index-docs.js";
 
 async function start() {
   try {
@@ -12,6 +13,8 @@ async function start() {
 
     await initDb();
     await createUserTask();
+
+    await indexDocs();
 
     const app = createServer();
 

@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import { addDocument } from "./rag";
 
-async function indexDocs() {
+export async function indexDocs() {
   const folder = "./data/txt";
   console.log("📁 Indexando documentos desde:", folder);
 

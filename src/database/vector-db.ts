@@ -1,7 +1,9 @@
 import { ChromaClient } from "chromadb";
 
-const client = new ChromaClient({
-  path: process.env.CHROMA_PATH,
+export const client = new ChromaClient({
+  host: process.env.CHROMA_HOST || "localhost",
+  port: Number(process.env.CHROMA_PORT) || 8000,
+  ssl: false,
 });
 
 export const collection = await client.getOrCreateCollection({
