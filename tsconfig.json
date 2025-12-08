@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "outDir": "./dist",
     "esModuleInterop": true,
-    "isolatedModules": false,
-    "strict": false,
-    "outDir": "dist",
-    "rootDir": "src"
-  }
+    "resolveJsonModule": true,
+    "strict": false
+  },
+  "include": ["src"]
 }

@@ -118,7 +118,7 @@ export async function addDocument(text) {
 
     const embedding = embeddingResponse.data[0].embedding;
 
-    await collection.add({
+    await (await collection).add({
       ids: [crypto.randomUUID()],
       embeddings: [embedding],
       metadatas: [{ text: chunk }],
@@ -137,7 +137,7 @@ export async function searchDocs(query) {
 
     const embedding = embeddingResponse.data[0].embedding;
 
-    const res = await collection.query({
+    const res = await (await collection).query({
       nResults: 3,
       queryEmbeddings: [embedding],
     });
